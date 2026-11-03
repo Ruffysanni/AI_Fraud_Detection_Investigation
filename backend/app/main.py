@@ -11,6 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from backend.app.database import get_db_connection
+from backend.app.reports.report_generator import (
+    generate_investigation_report,
+    export_report_to_json,
+)
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = BACKEND_DIR / "models" / "fraud_model.joblib"
@@ -324,4 +328,48 @@ def get_alerts(
         raise HTTPException(
             status_code=500,
             detail="Unable to retrieve investigation alerts.",
+        ) from exc
+
+@app.post("/reports/{transaction_id}/generate")
+def generate_transaction_report(transaction_id: int):
+    """Generate and export an investigation report."""
+
+    if transaction_id <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Transaction ID must be a positive integer.",
+        )
+
+    try:
+        # Generate the investigation report.
+        report = generate_investigation_report(transaction_id)
+
+        # Confirm that transaction details were retrieved.
+        if not report.get("transaction_details"):
+            raise HTTPException(
+                status_code=404,
+                detail="Transaction not found. Report could not be generated.",
+            )
+
+        # Export the report to JSON.
+        file_path = export_report_to_json(report)
+
+        return {
+            "success": True,
+            "transaction_id": transaction_id,
+            "report_id": report["report_metadata"]["report_id"],
+            "synthesis_status": (
+                report["report_metadata"]["synthesis_status"]
+            ),
+            "exported_file": file_path,
+            "report": report,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to generate the investigation report.",
         ) from exc
