@@ -15,3 +15,11 @@ data/raw/
 *.bak
 
 data/reports/
+
+# Test and coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Log files
+*.log

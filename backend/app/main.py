@@ -1,6 +1,7 @@
 
 """API for transaction fraud detection and investigation."""
 
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -30,12 +31,18 @@ app = FastAPI(
     version="0.3.0",
 )
 
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=False,
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
