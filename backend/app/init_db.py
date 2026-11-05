@@ -43,6 +43,17 @@ def initialize_database():
             """)
 
             cur.execute("""
+                CREATE TABLE IF NOT EXISTS investigation_findings (
+                    finding_id BIGSERIAL PRIMARY KEY,
+                    transaction_id BIGINT NOT NULL
+                        REFERENCES transactions(transaction_id)
+                        ON DELETE CASCADE,
+                    findings JSONB NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+
+            cur.execute("""
                 CREATE INDEX IF NOT EXISTS idx_transactions_created_at
                 ON transactions (created_at DESC);
             """)
